@@ -1,5 +1,13 @@
 <launch>
+    <!-- Basic launch file to init the kobuki base and sensor data streams -->
     
+    <!-- Kobuki base -->
     <include file="$(find kobuki_node)/launch/minimal.launch" />
+
+    <!-- LiDAR -->
+    <node pkg="urg_node" name="hokuyo_lidar" type="urg_node" />
+
+    <!-- Intel Realsense (Depth Camera) -->
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch" />
 
 </launch>
