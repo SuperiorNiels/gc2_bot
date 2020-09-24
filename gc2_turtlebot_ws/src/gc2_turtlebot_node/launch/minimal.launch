@@ -8,6 +8,6 @@
     <node pkg="urg_node" name="hokuyo_lidar" type="urg_node" args="_ip_address:=192.168.0.10"/>
 
     <!-- Intel Realsense (Depth Camera) -->
-    <include file="$(find realsense2_camera)/launch/rs_camera.launch" />
+    <include file="$(find realsense2_camera)/launch/rs_rgbd.launch" />
 
 </launch>
