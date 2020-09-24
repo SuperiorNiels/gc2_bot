@@ -9,10 +9,14 @@
         <node pkg="urg_node" name="hokuyo_lidar" type="urg_node" args="_ip_address:=192.168.0.10"/>
 
         <!-- Intel Realsense (Depth Camera) -->
-        <include file="$(find realsense2_camera)/launch/rs_rgbd.launch" />
+        <group ns="intel">
+            <include file="$(find realsense2_camera)/launch/rs_rgbd.launch" />
+        </group>
 
         <!-- Astra camera (if used) -->
-        <include file="$(find astra_camera)/launch/astra.launch" />
+        <group ns="astra">
+            <include file="$(find astra_camera)/launch/astra.launch" />
+        </group>
     </group>
 
 </launch>
