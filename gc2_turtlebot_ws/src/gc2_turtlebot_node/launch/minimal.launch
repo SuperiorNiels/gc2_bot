@@ -4,10 +4,12 @@
     <!-- Kobuki base -->
     <include file="$(find kobuki_node)/launch/minimal.launch" />
 
-    <!-- LiDAR -->
-    <node pkg="urg_node" name="hokuyo_lidar" type="urg_node" args="_ip_address:=192.168.0.10"/>
+    <group ns="turtlebot_sensors">
+        <!-- LiDAR -->
+        <node pkg="urg_node" name="hokuyo_lidar" type="urg_node" args="_ip_address:=192.168.0.10"/>
 
-    <!-- Intel Realsense (Depth Camera) -->
-    <include file="$(find realsense2_camera)/launch/rs_rgbd.launch" />
+        <!-- Intel Realsense (Depth Camera) -->
+        <include file="$(find realsense2_camera)/launch/rs_rgbd.launch" />
+    </group>
 
 </launch>
