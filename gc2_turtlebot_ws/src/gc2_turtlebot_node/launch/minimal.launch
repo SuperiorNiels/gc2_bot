@@ -1,5 +1,5 @@
 <launch>
     
-    <include file="$(find kobuki)/kobuki_node/minimal.launch" />
+    <include file="$(find kobuki_node)/minimal.launch" />
 
 </launch>
