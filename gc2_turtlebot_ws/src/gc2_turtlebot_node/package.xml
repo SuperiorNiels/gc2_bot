@@ -4,6 +4,8 @@
   <version>0.0.1</version>
   <description>The gc2_turtlebot_node package</description>
 
+  <license>TODO</license>
+
   <maintainer email="niels.balemans@uantwerpen.be">Niels Balemans</maintainer>
   <author email="niels.balemans@uantwerpen.be">Niels Balemans</author>
 
