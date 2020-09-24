@@ -10,6 +10,9 @@
 
         <!-- Intel Realsense (Depth Camera) -->
         <include file="$(find realsense2_camera)/launch/rs_rgbd.launch" />
+
+        <!-- Astra camera (if used) -->
+        <include file="$(find astra_camera)/launch/astra.launch" />
     </group>
 
 </launch>
