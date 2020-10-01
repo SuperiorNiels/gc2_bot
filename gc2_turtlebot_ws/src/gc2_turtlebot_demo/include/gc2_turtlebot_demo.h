@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 #include <termios.h>
-#include <stdio.h>
+#include <iostream>
 
 namespace gc2_demo {
 
@@ -14,6 +14,8 @@ class TurtlebotDemo {
     bool init();
 
     void run)();
+
+}
 
 }
 

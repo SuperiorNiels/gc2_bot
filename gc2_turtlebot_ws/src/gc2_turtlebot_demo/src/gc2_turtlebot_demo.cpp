@@ -2,11 +2,11 @@
 
 namespace gc2_demo {
 
-    TurtlebotDemo() {
+    TurtlebotDemo::TurtlebotDemo() {
         std::cout << "Creating turtlebot." << std::endl;
     }
 
-    ~TurtlebotDemo() {
+    TurtlebotDemo::~TurtlebotDemo() {
         std::cout << "Destroying turtlebot." << std::endl;
     }
 
