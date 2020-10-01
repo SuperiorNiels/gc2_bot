@@ -15,16 +15,19 @@ namespace gc2_demo {
 
         ros::NodeHandle nh("~");
         
-        name = nh.getUnresolvedNamespace();
+        auto name = nh.getUnresolvedNamespace();
 
-        nh.getParam("angular_vel_step", angular_vel_step);
-        nh.getParam("angular_vel_max", angular_vel_max);
+        //nh.getParam("angular_vel_step", angular_vel_step);
+        //nh.getParam("angular_vel_max", angular_vel_max);
 
         return true;
     }
 
     void TurtlebotDemo::run() {
         std::cout << "Running demo..." << std::endl;
+        while(ros::ok()) {
+
+        }
     }
 
 }
