@@ -3,7 +3,6 @@
 
 #include <ros/ros.h>
 #include <termios.h>
-#include <kuboki_msgs/KeyboardInput.h>
 #include <stdio.h>
 
 namespace gc2_demo {

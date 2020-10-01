@@ -12,6 +12,14 @@ namespace gc2_demo {
 
     bool TurtlebotDemo::init() {
         std::cout << "Init turtlebot." << std::endl;
+
+        ros::NodeHandle nh("~");
+        
+        name = nh.getUnresolvedNamespace();
+
+        nh.getParam("angular_vel_step", angular_vel_step);
+        nh.getParam("angular_vel_max", angular_vel_max);
+
         return true;
     }
 
