@@ -8,14 +8,14 @@
 namespace gc2_demo {
 
 class TurtlebotDemo {
-
+public:
     TurtlebotDemo();
     ~TurtlebotDemo();
     bool init();
 
     void run();
 
-}
+};
 
 }
 
