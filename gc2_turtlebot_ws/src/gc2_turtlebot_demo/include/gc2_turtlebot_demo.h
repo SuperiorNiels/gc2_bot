@@ -5,6 +5,8 @@
 #include <termios.h>
 #include <iostream>
 
+#include <kobuki_msgs/MotorPower.h>
+
 namespace gc2_demo {
 
 class TurtlebotDemo {
