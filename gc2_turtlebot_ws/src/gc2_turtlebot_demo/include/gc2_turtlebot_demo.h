@@ -15,7 +15,6 @@ class TurtlebotDemo {
     bool init();
 
     void run)();
-}
 
 }
 
