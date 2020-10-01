@@ -21,7 +21,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-file(GLOB SOURCES RELATIVE ./src *.cpp)
+file(GLOB SOURCES RELATIVE ./src/*.cpp)
 
 add_executable(gc2_turtlebot_demo ${SOURCES})
 add_dependencies(gc2_turtlebot_demo ${catkin_EXPORTED_TARGETS})
