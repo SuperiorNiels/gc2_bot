@@ -13,7 +13,7 @@ class TurtlebotDemo {
     ~TurtlebotDemo();
     bool init();
 
-    void run)();
+    void run();
 
 }
 
