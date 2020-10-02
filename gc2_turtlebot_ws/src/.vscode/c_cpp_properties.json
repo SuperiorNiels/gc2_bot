@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/opt/ros/melodic/include/**",
+                "/home/turtlebot/gc2_bot/gc2_turtlebot_ws/devel/include/**",
+                "/home/turtlebot/gc2_bot/gc2_turtlebot_ws/src/gc2_turtlebot_demo/include/**",
+                "/home/turtlebot/kobuki_ws/src/kobuki/kobuki_auto_docking/include/**",
+                "/home/turtlebot/kobuki_ws/src/kobuki/kobuki_bumper2pc/include/**",
+                "/home/turtlebot/kobuki_ws/src/kobuki/kobuki_controller_tutorial/include/**",
+                "/home/turtlebot/kobuki_ws/src/kobuki/kobuki_keyop/include/**",
+                "/home/turtlebot/kobuki_ws/src/kobuki/kobuki_node/include/**",
+                "/home/turtlebot/kobuki_ws/src/kobuki/kobuki_random_walker/include/**",
+                "/home/turtlebot/kobuki_ws/src/kobuki/kobuki_safety_controller/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14"
+        }
+    ],
+    "version": 4
+}
