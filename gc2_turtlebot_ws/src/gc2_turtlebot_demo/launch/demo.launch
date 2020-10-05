@@ -1,0 +1,7 @@
+<launch>
+
+    <include file="$(find kobuki_node)/launch/minimal.launch" />
+
+    <node pkg="gc2_turtlebot_demo" name="gc2_demo" type="gc2_turtlebot_demo"/>
+
+</launch>
