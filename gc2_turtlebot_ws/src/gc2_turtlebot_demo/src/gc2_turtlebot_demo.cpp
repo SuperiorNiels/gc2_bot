@@ -1,25 +1,27 @@
 #include "../include/gc2_turtlebot_demo.h"
 
+
 namespace gc2_demo {
 
-    TurtlebotDemo::TurtlebotDemo() {
-        std::cout << "Creating turtlebot." << std::endl;
-    }
+    TurtlebotDemo::TurtlebotDemo() {}
 
     TurtlebotDemo::~TurtlebotDemo() {
-        std::cout << "Destroying turtlebot." << std::endl;
         disable();
     }
 
     bool TurtlebotDemo::init() {
         std::cout << "Init turtlebot." << std::endl;
 
-        ros::NodeHandle nh("~");
+        ros::NodeHandle nh;
         
         //auto name = nh.getUnresolvedNamespace();
 
         motor_power_publisher = nh.advertise<kobuki_msgs::MotorPower>("/mobile_base/commands/motor_power", 1);
         velocity_publisher = nh.advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1);
+
+        //command_subscriber = nh.subscribe("/mobile_base/sensors/imu_data", 1, printIMUdata);
+
+        control_timer = nh.createTimer(ros::Duration(0.1), &TurtlebotDemo::controlCallback, this);
 
         // Connect to kobuki base
         connected = false;
@@ -30,7 +32,7 @@ namespace gc2_demo {
                 break;
             }
             count++;
-            usleep(1000000);
+            usleep(1000000); // sleep 1s
         }
 
         if(connected) {
@@ -41,48 +43,92 @@ namespace gc2_demo {
             ROS_INFO("GC2 demo connected to kobuki base.");
         }
 
-        current_angle = 0.0;
         return connected;
     }
 
+    void TurtlebotDemo::controlCallback(const ros::TimerEvent& e) {
+        // If prev time is not initialized, skip (for more accurate timing)
+        if(!state_mutex.try_lock()) {
+            ROS_WARN("Timer missed: state locked.");
+            state_mutex.unlock();
+            return;
+        }
+        if(current_state.last_checked.isZero()) {
+            current_state.current_action = TURNING_LEFT;
+            current_state.start_time = ros::Time::now();
+            current_state.action_time = ros::Duration(turn_time_s);
+            current_state.last_checked = ros::Time::now();
+            return;
+        }
+
+        ros::Duration elapsed = ros::Time::now() - current_state.start_time;
+        //ROS_INFO("Elapsed time: %f ms", elapsed.toSec());
+
+        switch(current_state.current_action) {
+            case TURNING_LEFT:
+                cmd.angular.z = -angular_vel;
+                velocity_publisher.publish(cmd);
+                if(elapsed >= current_state.action_time) {
+                    // Action time succeeded, change state
+                    current_state.current_action = COOLDOWN;
+                    current_state.prev_action = TURNING_LEFT;
+                    current_state.action_time = ros::Duration(cool_time_s);
+                    current_state.start_time = ros::Time::now();
+                    ROS_INFO("state: %s time: %.3fs.", action_strings[current_state.current_action], current_state.action_time.toSec());
+                }
+                break;
+            case TURNING_RIGHT:
+                cmd.angular.z = angular_vel;
+                velocity_publisher.publish(cmd);
+                if(elapsed >= current_state.action_time) {
+                    // Action time succeeded, change state
+                    current_state.current_action = COOLDOWN;
+                    current_state.prev_action = TURNING_RIGHT;                    
+                    current_state.action_time = ros::Duration(cool_time_s);
+                    current_state.start_time = ros::Time::now();
+                    ROS_INFO("state: %s time: %.3fs.", action_strings[current_state.current_action], current_state.action_time.toSec());
+                }
+                break;
+            case COOLDOWN:
+                if(elapsed >= current_state.action_time) {
+                    // Action time succeeded, change state
+                    current_state.current_action = current_state.prev_action == TURNING_LEFT ? TURNING_RIGHT : TURNING_LEFT;
+                    current_state.prev_action = COOLDOWN;
+                    current_state.action_time = ros::Duration(turn_time_s);
+                    current_state.start_time = ros::Time::now();
+                    ROS_INFO("state: %s time: %.3fs.", action_strings[current_state.current_action], current_state.action_time.toSec());
+                }
+            case PAUSED:
+            default:
+                // Sending zero command should not be necessary here (avoid spamming controller)
+                //cmd.angular.z = 0;
+                //velocity_publisher.publish(cmd);
+                break;
+        }
+        
+        current_state.last_checked = ros::Time::now();
+        state_mutex.unlock();
+
+        // Check on thread, if its dead quit the application
+        if(!kbd_thread.isRunning()) {
+            running = false;
+            disable(); // kill motor
+        }
+    }
+
     void TurtlebotDemo::run() {
-        std::cout << "Running demo..." << std::endl;
-
-        enable();
-
-        ros::Rate loop_rate(10);
-
         // Spawn keyboard thread
         running = true;
         kbd_thread.start(&gc2_demo::TurtlebotDemo::keyboardThread, *this);
-
-        uint8_t count = 0;
-        cmd.angular.z = getAngularVelocity();
-        while(running && ros::ok()) {
-            // Send velocity command if not paused
-            if(!paused) {
-                if(count >= 5) {
-                    cmd.angular.z = getAngularVelocity();
-                    count = 0;
-                    ROS_INFO("Rotating with vel: %.2f current angle: %.2f", cmd.angular.z, current_angle);
-                }
-                velocity_publisher.publish(cmd);
-                ros::spinOnce();
-                loop_rate.sleep();
-                count += 1;
-            }
-
-            // Check on thread, if its dead quit the application
-            if(!kbd_thread.isRunning()) {
-                running = false;
-                disable(); // kill motor
-            }
-        }
         
+        // Ros main loop, and enable motors
+        enable();
+        ros::spin();
+        disable();
+
+        // Program finished, stop thread
         running = false;
         kbd_thread.join();
-
-        disable();
     }
 
     void TurtlebotDemo::enable() {
@@ -116,23 +162,17 @@ namespace gc2_demo {
         }
     }
 
-    double TurtlebotDemo::getAngularVelocity() {
-        if(turning_left) {
-            if(current_angle >= max_angle) turning_left = false;
-        } else {
-            if(current_angle <= min_angle) turning_left = true;
-        }
-        double step = turning_left ? angular_vel : -angular_vel;
-        current_angle += step;
-        return step;
-    }
-
+    // void TurtlebotDemo::printIMUdata(const std_msgs::String::ConstPtr& msg) {
+    //     ROS_INFO(msg->data.c_str());
+    // }
     
-    int TurtlebotDemo::getChr() {
+    int TurtlebotDemo::getChar() {
         static struct termios oldt, newt;
         tcgetattr( STDIN_FILENO, &oldt); 
         newt = oldt;
-        newt.c_lflag &= ~(ICANON);           
+        newt.c_lflag &= ~(ICANON);    
+        newt.c_cc[VMIN] = 0;
+        newt.c_cc[VTIME] = 0; // non-blocking mode      
         tcsetattr( STDIN_FILENO, TCSANOW, &newt); 
 
         int c = getchar(); 
@@ -143,16 +183,38 @@ namespace gc2_demo {
 
     void TurtlebotDemo::keyboardThread() {
         while(running) {
-            int c = getChr();
+            int c = getChar();
             switch(c) {
                 case 32: //space
-                    ROS_INFO("SPACE PRESSED");
-                    paused = !paused;
+                    state_mutex.lock(); // blocking call, wait until timer cb is done
+                    
+                    if(current_state.current_action == PAUSED) {
+                        // Resume prev action
+                        current_state.current_action = current_state.prev_action;
+                        current_state.prev_action = PAUSED;
+                        current_state.start_time = ros::Time::now();
+                        ROS_INFO("Resuming previous action for: %.3f.", current_state.action_time.toSec());
+                    } else {
+                        ROS_INFO("Pausing demo! Press space to unpause...");
+                        // Pause
+                        if(current_state.current_action == COOLDOWN) {
+                            // If cooldown period, perform state switch and set paused mode
+                            current_state.current_action = current_state.prev_action == TURNING_LEFT ? TURNING_RIGHT : TURNING_LEFT;;
+                            current_state.prev_action = COOLDOWN;
+                            current_state.action_time = ros::Duration(turn_time_s);
+                            current_state.start_time = ros::Time::now();
+                        }
+                        current_state.prev_action = current_state.current_action;
+                        current_state.current_action = PAUSED;
+                        current_state.action_time = current_state.action_time - (ros::Time::now() - current_state.start_time);
+                    }
+
+                    state_mutex.unlock();
                     break;
                 default:
                     break;
             }
-            usleep(500000);
+            usleep(10000); // sleep 10ms
         }
     }
 }
