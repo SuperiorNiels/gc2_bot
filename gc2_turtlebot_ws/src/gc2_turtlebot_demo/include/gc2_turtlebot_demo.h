@@ -2,6 +2,7 @@
 #define GC2_TURTLEBOT_DEMO
 
 #include <iostream>
+#include <string>
 #include <mutex>
 
 #include <ros/ros.h>
@@ -45,7 +46,8 @@ public:
     void enable();
     void disable();
     void controlCallback(const ros::TimerEvent& e); // ran every 100 ms (by timer)
-    //void printIMUdata(const std_msgs::String::ConstPtr& msg);
+    void updatePaused();
+    void cmdCallback(const std_msgs::String::ConstPtr& msg);
 
     // Keyboard stuff
     int getChar();

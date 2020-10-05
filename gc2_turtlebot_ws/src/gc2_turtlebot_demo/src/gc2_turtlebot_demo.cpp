@@ -19,7 +19,7 @@ namespace gc2_demo {
         motor_power_publisher = nh.advertise<kobuki_msgs::MotorPower>("/mobile_base/commands/motor_power", 1);
         velocity_publisher = nh.advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1);
 
-        //command_subscriber = nh.subscribe("/mobile_base/sensors/imu_data", 1, printIMUdata);
+        command_subscriber = nh.subscribe("/robot/action", 1, &TurtlebotDemo::cmdCallback, this);
 
         control_timer = nh.createTimer(ros::Duration(0.1), &TurtlebotDemo::controlCallback, this);
 
@@ -162,9 +162,42 @@ namespace gc2_demo {
         }
     }
 
-    // void TurtlebotDemo::printIMUdata(const std_msgs::String::ConstPtr& msg) {
-    //     ROS_INFO(msg->data.c_str());
-    // }
+    void TurtlebotDemo::updatePaused() {
+        state_mutex.lock(); // blocking call, wait until timer cb is done
+                    
+        if(current_state.current_action == PAUSED) {
+            // Resume prev action
+            current_state.current_action = current_state.prev_action;
+            current_state.prev_action = PAUSED;
+            current_state.start_time = ros::Time::now();
+            ROS_INFO("Resuming previous action for: %.3fs.", current_state.action_time.toSec());
+        } else {
+            ROS_INFO("Pausing current action.");
+            // Pause
+            if(current_state.current_action == COOLDOWN) {
+                // If cooldown period, perform state switch and set paused mode
+                current_state.current_action = current_state.prev_action == TURNING_LEFT ? TURNING_RIGHT : TURNING_LEFT;;
+                current_state.prev_action = COOLDOWN;
+                current_state.action_time = ros::Duration(turn_time_s);
+                current_state.start_time = ros::Time::now();
+            }
+            current_state.prev_action = current_state.current_action;
+            current_state.current_action = PAUSED;
+            current_state.action_time = current_state.action_time - (ros::Time::now() - current_state.start_time);
+        }
+
+        state_mutex.unlock();
+    }
+
+    void TurtlebotDemo::cmdCallback(const std_msgs::String::ConstPtr& msg) {
+        if(msg->data.find("go") != std::string::npos) {
+            if(current_state.current_action == PAUSED) updatePaused();
+        } else if(msg->data.find("stop") != std::string::npos) {
+            if(current_state.current_action != PAUSED) updatePaused();
+        } else {
+            ROS_WARN("Received unknown external command.");
+        }
+    }
     
     int TurtlebotDemo::getChar() {
         static struct termios oldt, newt;
@@ -186,30 +219,7 @@ namespace gc2_demo {
             int c = getChar();
             switch(c) {
                 case 32: //space
-                    state_mutex.lock(); // blocking call, wait until timer cb is done
-                    
-                    if(current_state.current_action == PAUSED) {
-                        // Resume prev action
-                        current_state.current_action = current_state.prev_action;
-                        current_state.prev_action = PAUSED;
-                        current_state.start_time = ros::Time::now();
-                        ROS_INFO("Resuming previous action for: %.3f.", current_state.action_time.toSec());
-                    } else {
-                        ROS_INFO("Pausing demo! Press space to unpause...");
-                        // Pause
-                        if(current_state.current_action == COOLDOWN) {
-                            // If cooldown period, perform state switch and set paused mode
-                            current_state.current_action = current_state.prev_action == TURNING_LEFT ? TURNING_RIGHT : TURNING_LEFT;;
-                            current_state.prev_action = COOLDOWN;
-                            current_state.action_time = ros::Duration(turn_time_s);
-                            current_state.start_time = ros::Time::now();
-                        }
-                        current_state.prev_action = current_state.current_action;
-                        current_state.current_action = PAUSED;
-                        current_state.action_time = current_state.action_time - (ros::Time::now() - current_state.start_time);
-                    }
-
-                    state_mutex.unlock();
+                    updatePaused();
                     break;
                 default:
                     break;
