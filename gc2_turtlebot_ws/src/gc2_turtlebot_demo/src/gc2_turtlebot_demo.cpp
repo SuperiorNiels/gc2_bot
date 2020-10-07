@@ -12,7 +12,12 @@ namespace gc2_demo {
     bool TurtlebotDemo::init() {
         std::cout << "Init turtlebot." << std::endl;
 
-        ros::NodeHandle nh;
+        ros::NodeHandle nh('~');
+
+        // Get parameters from ros
+        ros::param::get("~angular_vel", angular_vel);
+        ros::param::get("~turn_time_s", turn_time_s);
+        ros::param::get("~cool_time_s", cool_time_s);
         
         //auto name = nh.getUnresolvedNamespace();
 

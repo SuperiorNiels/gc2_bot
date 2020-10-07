@@ -2,6 +2,10 @@
 
     <include file="$(find kobuki_node)/launch/minimal.launch" />
 
-    <node pkg="gc2_turtlebot_demo" name="gc2_demo" type="gc2_turtlebot_demo"/>
+    <node pkg="gc2_turtlebot_demo" name="gc2_demo" type="gc2_turtlebot_demo">
+        <param name="angular_vel" type="double" value="0.5"/>
+        <param name="turn_time_s" type="double" value="5.0"/>
+        <param name="cool_time_s" type="double" value="1.0"/>
+    </node>
 
 </launch>

@@ -63,9 +63,9 @@ private:
     demo_state current_state;
     std::mutex state_mutex;
 
-    const double angular_vel = 0.5; // 0.5 rad/s
-    const double turn_time_s = 5.0; // 5s turing
-    const double cool_time_s = 1.0; // 1s cooldown
+    double angular_vel = 0.5; // 0.5 rad/s
+    double turn_time_s = 5.0; // 5s turing
+    double cool_time_s = 1.0; // 1s cooldown
 
     bool motor_power_status = false;
     bool connected = false;
